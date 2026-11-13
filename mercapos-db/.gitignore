@@ -1,0 +1,5 @@
+.env
+http/.env
+*.backup.json
+*.token
+__pycache__/

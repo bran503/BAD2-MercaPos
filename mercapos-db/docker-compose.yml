@@ -1,0 +1,19 @@
+services:
+  couchdb:
+    image: couchdb:3.3
+    container_name: mercapos-couchdb
+    ports:
+      - "127.0.0.1:5985:5984"
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD:?Defina COUCHDB_PASSWORD en el entorno o .env}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:5984/_up"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - couchdb_data:/opt/couchdb/data
+
+volumes:
+  couchdb_data:

@@ -1,0 +1,83 @@
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+
+### Índices de lectura del laboratorio v1
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","tipo_operacion","fecha_local"]},"ddoc":"idx-tipo-operacion-fecha","name":"idx-tipo-operacion-fecha","type":"json"}
+
+### API v2: operaciones del puesto y proyección canónica
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","puesto_id","fecha_local"]},"ddoc":"idx-operacion-puesto-fecha","name":"idx-operacion-puesto-fecha","type":"json"}
+
+### API v2: selector de operaciones canónicas usado por existencias
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","schema_version","puesto_id"]},"ddoc":"idx-operacion-schema-puesto","name":"idx-operacion-schema-puesto","type":"json"}
+
+### Movimientos heredados consultados por producto
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","producto_id"]},"ddoc":"idx-tipo-producto","name":"idx-tipo-producto","type":"json"}
+
+### Movimientos combinados por puesto y producto
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","puesto_id","producto_id"]},"ddoc":"idx-movimiento-puesto-producto","name":"idx-movimiento-puesto-producto","type":"json"}
+
+### Aperturas v2 por puesto/producto
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","schema_version","puesto_id","producto_id"]},"ddoc":"idx-apertura-puesto-producto","name":"idx-apertura-puesto-producto","type":"json"}
+
+### Catálogo por puesto y estado
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","puesto_id","activo"]},"ddoc":"idx-catalogo-puesto-activo","name":"idx-catalogo-puesto-activo","type":"json"}
+
+### Catálogo global del laboratorio y listas filtradas por activo
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","activo"]},"ddoc":"idx-tipo-activo","name":"idx-tipo-activo","type":"json"}
+
+### Consultas legacy de conteos por fecha
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","fecha_local"]},"ddoc":"idx-tipo-fecha","name":"idx-tipo-fecha","type":"json"}
+
+### Conteos v2 del puesto por fecha
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","puesto_id","fecha_local"]},"ddoc":"idx-conteo-puesto-fecha","name":"idx-conteo-puesto-fecha","type":"json"}
+
+### Incidencias abiertas/resueltas del puesto
+POST {{host}}/mercapos/_index
+Authorization: {{auth}}
+Content-Type: application/json
+
+{"index":{"fields":["tipo","puesto_id","resuelta"]},"ddoc":"idx-incidencia-puesto-resuelta","name":"idx-incidencia-puesto-resuelta","type":"json"}
+
+### Comprobar índices
+GET {{host}}/mercapos/_index
+Authorization: {{auth}}

@@ -1,0 +1,163 @@
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+
+### 1. PUESTO (negocio y ubicación) - datos ficticios
+PUT {{host}}/mercapos/puesto:0001
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "puesto",
+  "nombre": "Puesto de verduras de prueba",
+  "mercado": "Mercado municipal de prueba",
+  "ubicacion": "San Salvador, El Salvador",
+  "propietario_usuario_id": "usuario:0002",
+  "activo": true
+}
+
+### 2. USUARIOS (sin contraseña: las credenciales se gestionan por separado)
+PUT {{host}}/mercapos/usuario:0001
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "usuario",
+  "nombre": "Vendedor de prueba",
+  "rol": "vendedor",
+  "puesto_id": "puesto:0001",
+  "activo": true
+}
+
+###
+PUT {{host}}/mercapos/usuario:0002
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "usuario",
+  "nombre": "Administrador de prueba",
+  "rol": "administrador",
+  "puesto_id": "puesto:0001",
+  "activo": true
+}
+
+### 3. PRODUCTOS (catálogo)
+PUT {{host}}/mercapos/producto:0042
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "producto",
+  "nombre": "Tomate (libra)",
+  "categoria": "verduras",
+  "precio_unitario": 1.25,
+  "unidad": "libra",
+  "activo": true,
+  "actualizado_en": "2026-10-20T07:00:00-06:00",
+  "actualizado_por": "usuario:0002"
+}
+
+###
+PUT {{host}}/mercapos/producto:0107
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "producto",
+  "nombre": "Cebolla (libra)",
+  "categoria": "verduras",
+  "precio_unitario": 0.75,
+  "unidad": "libra",
+  "activo": true,
+  "actualizado_en": "2026-10-20T07:00:00-06:00",
+  "actualizado_por": "usuario:0002"
+}
+
+### 4. INVENTARIO INICIAL (movimientos de entrada, sin operación asociada)
+PUT {{host}}/mercapos/mov:disp03:20261020T080000:r1:0042
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "movimiento",
+  "puesto_id": "puesto:0001",
+  "producto_id": "producto:0042",
+  "cantidad": 50,
+  "motivo": "inventario_inicial",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-20T08:00:00-06:00"
+}
+
+###
+PUT {{host}}/mercapos/mov:disp03:20261020T080000:r2:0107
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "movimiento",
+  "puesto_id": "puesto:0001",
+  "producto_id": "producto:0107",
+  "cantidad": 30,
+  "motivo": "inventario_inicial",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-20T08:00:00-06:00"
+}
+
+
+### 5. OPERACIÓN: venta con dos renglones
+PUT {{host}}/mercapos/operacion:550e8400-e29b-41d4-a716-446655440000
+Authorization: {{auth}}
+Content-Type: application/json
+
+
+{
+  "tipo": "operacion",
+  "tipo_operacion": "venta",
+  "puesto_id": "puesto:0001",
+  "usuario_id": "usuario:0001",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-20T14:32:07-06:00",
+  "renglones": [
+    { "producto_id": "producto:0042", "cantidad": 2, "precio_unitario": 1.25 },
+    { "producto_id": "producto:0107", "cantidad": 1, "precio_unitario": 0.75 }
+  ],
+  "total": 3.25
+}
+
+
+### 6. Un movimiento de salida por cada renglón de la venta
+PUT {{host}}/mercapos/mov:550e8400-e29b-41d4-a716-446655440000:r1
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "movimiento",
+  "puesto_id": "puesto:0001",
+  "producto_id": "producto:0042",
+  "cantidad": -2,
+  "motivo": "venta",
+  "operacion_id": "operacion:550e8400-e29b-41d4-a716-446655440000",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-20T14:32:07-06:00"
+}
+
+
+###
+PUT {{host}}/mercapos/mov:550e8400-e29b-41d4-a716-446655440000:r2
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "movimiento",
+  "puesto_id": "puesto:0001",
+  "producto_id": "producto:0107",
+  "cantidad": -1,
+  "motivo": "venta",
+  "operacion_id": "operacion:550e8400-e29b-41d4-a716-446655440000", 
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-20T14:32:07-06:00"
+}
+
+### 7. Ver todos los documentos (esperado: revisiones que empiezan con 1-)
+GET {{host}}/mercapos/_all_docs?include_docs=true
+Authorization: {{auth}}

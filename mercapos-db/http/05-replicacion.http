@@ -1,0 +1,36 @@
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+
+### Crear la base que simula el nodo central
+PUT {{host}}/mercapos_central
+Authorization: {{auth}}
+
+### Replicación local -> central (continua)
+PUT {{host}}/_replicator/local-a-central
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "source": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos",
+  "target": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos_central",
+  "continuous": true
+}
+
+### Replicación central -> local (continua)
+PUT {{host}}/_replicator/central-a-local
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "source": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos_central",
+  "target": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos",
+  "continuous": true
+}
+
+### Ver estado de las replicaciones (esperado: state running, error_count 0)
+GET {{host}}/_scheduler/docs
+Authorization: {{auth}}
+
+### Ver documentos en el nodo central
+GET {{host}}/mercapos_central/_all_docs
+Authorization: {{auth}}

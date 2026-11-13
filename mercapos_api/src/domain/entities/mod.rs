@@ -1,0 +1,9 @@
+pub mod conteo_fisico;
+pub mod credencial;
+pub mod incidencia;
+pub mod movimiento;
+pub mod operacion;
+pub mod producto;
+pub mod puesto;
+pub mod sesion;
+pub mod usuario;

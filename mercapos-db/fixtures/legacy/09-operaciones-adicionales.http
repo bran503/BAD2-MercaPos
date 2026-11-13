@@ -1,0 +1,274 @@
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+
+
+### ============================================================
+### TEST 09 - OPERACIONES ADICIONALES
+### Ejecutar después de los tests 02 y 06.
+### Ejecutar las peticiones de creación una sola vez por base de datos.
+### ============================================================
+
+
+### 0. VERIFICAR SI LOS DOCUMENTOS YA EXISTEN
+### Antes de crear los datos, los documentos de este test deberían
+### aparecer como not_found. Si ya existen, no vuelvas a ejecutar
+### los PUT de creación en esa misma base de datos.
+
+POST {{host}}/mercapos/_all_docs?include_docs=true
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "keys": [
+    "operacion:disp03:20261021T090000",
+    "mov:disp03:20261021T090000:r1:0042",
+    "operacion:disp03:20261022T170000",
+    "mov:disp03:20261022T170000:r1:0042",
+    "operacion:disp03:20261023T110000",
+    "mov:disp03:20261023T110000:r1:0042",
+    "conteo:disp03:20261024T180000",
+    "operacion:disp03:20261024T180500",
+    "mov:disp03:20261024T180500:r1:0042"
+  ]
+}
+
+
+### ============================================================
+### 1. COMPRA: ENTRADA DE 20 LIBRAS DE TOMATE + SU MOVIMIENTO
+### ============================================================
+
+PUT {{host}}/mercapos/operacion:disp03:20261021T090000
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "operacion",
+  "tipo_operacion": "compra",
+  "puesto_id": "puesto:0001",
+  "usuario_id": "usuario:0002",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-21T09:00:00-06:00",
+  "renglones": [
+    {
+      "producto_id": "producto:0042",
+      "cantidad": 20,
+      "costo_unitario": 0.90
+    }
+  ],
+  "total": 18.00
+}
+
+### Movimiento de la compra (+20)
+PUT {{host}}/mercapos/mov:disp03:20261021T090000:r1:0042
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "movimiento",
+  "puesto_id": "puesto:0001",
+  "producto_id": "producto:0042",
+  "cantidad": 20,
+  "motivo": "compra",
+  "operacion_id": "operacion:disp03:20261021T090000",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-21T09:00:00-06:00"
+}
+
+
+### ============================================================
+### 2. MERMA: 2 LIBRAS DE TOMATE EN MAL ESTADO + SU MOVIMIENTO
+### ============================================================
+
+PUT {{host}}/mercapos/operacion:disp03:20261022T170000
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "operacion",
+  "tipo_operacion": "merma",
+  "puesto_id": "puesto:0001",
+  "usuario_id": "usuario:0001",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-22T17:00:00-06:00",
+  "renglones": [
+    {
+      "producto_id": "producto:0042",
+      "cantidad": 2
+    }
+  ],
+  "motivo": "producto en mal estado"
+}
+
+### Movimiento de merma (-2)
+PUT {{host}}/mercapos/mov:disp03:20261022T170000:r1:0042
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "movimiento",
+  "puesto_id": "puesto:0001",
+  "producto_id": "producto:0042",
+  "cantidad": -2,
+  "motivo": "merma",
+  "operacion_id": "operacion:disp03:20261022T170000",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-22T17:00:00-06:00"
+}
+
+
+### ============================================================
+### 3. DEVOLUCIÓN: UN CLIENTE DEVUELVE 1 LIBRA DE TOMATE
+### ============================================================
+
+PUT {{host}}/mercapos/operacion:disp03:20261023T110000
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "operacion",
+  "tipo_operacion": "devolucion",
+  "puesto_id": "puesto:0001",
+  "usuario_id": "usuario:0001",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-23T11:00:00-06:00",
+  "renglones": [
+    {
+      "producto_id": "producto:0042",
+      "cantidad": 1,
+      "precio_unitario": 1.25
+    }
+  ],
+  "total": 1.25,
+  "operacion_origen_id": "operacion:disp03:20261020T143207"
+}
+
+### Movimiento de devolución (+1)
+PUT {{host}}/mercapos/mov:disp03:20261023T110000:r1:0042
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "movimiento",
+  "puesto_id": "puesto:0001",
+  "producto_id": "producto:0042",
+  "cantidad": 1,
+  "motivo": "devolucion",
+  "operacion_id": "operacion:disp03:20261023T110000",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-23T11:00:00-06:00"
+}
+
+
+### ============================================================
+### 4. CONTEO FÍSICO
+### El sistema indica 64 libras y se cuentan 63.
+### Diferencia = 63 - 64 = -1.
+### ============================================================
+
+PUT {{host}}/mercapos/conteo:disp03:20261024T180000
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "conteo_fisico",
+  "puesto_id": "puesto:0001",
+  "usuario_id": "usuario:0002",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-24T18:00:00-06:00",
+  "renglones": [
+    {
+      "producto_id": "producto:0042",
+      "cantidad_sistema": 64,
+      "cantidad_contada": 63,
+      "diferencia": -1
+    }
+  ]
+}
+
+
+### ============================================================
+### 5. AJUSTE DERIVADO DEL CONTEO + SU MOVIMIENTO
+### ============================================================
+
+PUT {{host}}/mercapos/operacion:disp03:20261024T180500
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "operacion",
+  "tipo_operacion": "ajuste",
+  "puesto_id": "puesto:0001",
+  "usuario_id": "usuario:0002",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-24T18:05:00-06:00",
+  "renglones": [
+    {
+      "producto_id": "producto:0042",
+      "cantidad": -1
+    }
+  ],
+  "motivo": "diferencia detectada en conteo físico",
+  "conteo_id": "conteo:disp03:20261024T180000"
+}
+
+### Movimiento del ajuste (-1)
+PUT {{host}}/mercapos/mov:disp03:20261024T180500:r1:0042
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "movimiento",
+  "puesto_id": "puesto:0001",
+  "producto_id": "producto:0042",
+  "cantidad": -1,
+  "motivo": "ajuste",
+  "operacion_id": "operacion:disp03:20261024T180500",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-24T18:05:00-06:00"
+}
+
+
+### ============================================================
+### 6. COMPROBAR EXISTENCIAS FINALES
+### Esperado después de los tests 02, 06 y 09:
+### tomate (producto:0042) = 63; cebolla (producto:0107) = 29.
+### Cálculo del tomate antes del ajuste: 50 - 2 + 20 - 2 + 1 - 3 = 64.
+### Después del ajuste de -1: 63.
+### ============================================================
+
+GET {{host}}/mercapos/_design/inventario/_view/existencias?group=true
+Authorization: {{auth}}
+
+
+### ============================================================
+### 7. COMPROBAR LOS NUEVE DOCUMENTOS DE ESTE TEST
+### Esta consulta sirve tanto para revisar que fueron creados
+### como para comprobar los campos de los movimientos.
+### ============================================================
+
+POST {{host}}/mercapos/_all_docs?include_docs=true
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "keys": [
+    "operacion:disp03:20261021T090000",
+    "mov:disp03:20261021T090000:r1:0042",
+    "operacion:disp03:20261022T170000",
+    "mov:disp03:20261022T170000:r1:0042",
+    "operacion:disp03:20261023T110000",
+    "mov:disp03:20261023T110000:r1:0042",
+    "conteo:disp03:20261024T180000",
+    "operacion:disp03:20261024T180500",
+    "mov:disp03:20261024T180500:r1:0042"
+  ]
+}
+
+
+### ============================================================
+### 8. COMPROBAR EL MOVIMIENTO DEL AJUSTE
+### Esperado: puesto_id = puesto:0001 y cantidad = -1.
+### ============================================================
+
+GET {{host}}/mercapos/mov:disp03:20261024T180500:r1:0042
+Authorization: {{auth}}

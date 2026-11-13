@@ -1,0 +1,139 @@
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+
+GET {{host}}/
+Authorization: {{auth}}
+
+### 0a. Vista para listar documentos en conflicto
+PUT {{host}}/mercapos/_design/conflictos
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "views": {
+    "lista": {
+      "map": "function (doc) { if (doc._conflicts) { emit(doc._id, doc._conflicts); } }"
+    }
+  }
+}
+
+
+### 0b. Revisión del producto en el nodo local
+# @name docLocal
+GET {{host}}/mercapos/producto:0042
+Authorization: {{auth}}
+
+### 0c. Revisión del mismo producto en el nodo central
+# @name docCentral
+GET {{host}}/mercapos_central/producto:0042
+Authorization: {{auth}}
+
+### 0d. Revisión vigente de la tarea local -> central
+# @name repA
+GET {{host}}/_replicator/local-a-central
+Authorization: {{auth}}
+
+### 0e. Revisión vigente de la tarea central -> local
+# @name repB
+GET {{host}}/_replicator/central-a-local
+Authorization: {{auth}}
+
+### 1. CORTE: detener la replicación
+DELETE {{host}}/_replicator/local-a-central?rev={{repA.response.body.$._rev}}
+Authorization: {{auth}}
+
+###
+DELETE {{host}}/_replicator/central-a-local?rev={{repB.response.body.$._rev}}
+Authorization: {{auth}}
+
+### 7.2 Consultar producto local
+GET {{host}}/mercapos/producto:0042
+Authorization: {{auth}}
+
+### 7.3 Consultar producto central
+GET {{host}}/mercapos_central/producto:0042
+Authorization: {{auth}}
+
+### 2. El dispositivo local cambia el precio a 1.50
+PUT {{host}}/mercapos/producto:0042
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "_rev": "{{docLocal.response.body.$._rev}}",
+  "tipo": "producto",
+  "nombre": "Tomate (libra)",
+  "categoria": "verduras",
+  "precio_unitario": 1.50,
+  "unidad": "libra",
+  "activo": true,
+  "actualizado_en": "2026-10-24T11:00:00-06:00",
+  "actualizado_por": "usuario:0001"
+}
+
+
+### 3. El nodo central cambia el MISMO producto a 1.35
+### 7.4 Modificar producto central
+PUT {{host}}/mercapos_central/producto:0042
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "_rev": "{{docCentral.response.body.$._rev}}",
+  "tipo": "producto",
+  "nombre": "Tomate (libra)",
+  "categoria": "verduras",
+  "precio_unitario": 1.35,
+  "unidad": "libra",
+  "activo": true,
+  "actualizado_en": "2026-10-26T11:35:00-06:00",
+  "actualizado_por": "usuario:0002"
+}
+
+### 7.5 Verificar producto local
+GET {{host}}/mercapos/producto:0042
+Authorization: {{auth}}
+
+###
+
+### 7.6 Verificar producto central
+GET {{host}}/mercapos_central/producto:0042
+Authorization: {{auth}}
+
+### 4. RECONEXIÓN
+PUT {{host}}/_replicator/local-a-central
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "source": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos",
+  "target": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos_central",
+  "continuous": true
+}
+
+###
+PUT {{host}}/_replicator/central-a-local
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "source": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos_central",
+  "target": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos",
+  "continuous": true
+}
+
+### 5. Ver el documento con sus conflictos (en el central; esperar 5-10 s)
+GET {{host}}/mercapos_central/producto:0042?conflicts=true
+Authorization: {{auth}}
+
+### 6. Ver el documento con sus conflictos (en el local)
+GET {{host}}/mercapos/producto:0042?conflicts=true
+Authorization: {{auth}}
+
+### 7. Listar todos los documentos en conflicto
+GET {{host}}/mercapos/_design/conflictos/_view/lista
+Authorization: {{auth}}
+
+### Comprobar tareas de replicación
+GET {{host}}/_scheduler/docs
+Authorization: {{auth}}

@@ -1,0 +1,20 @@
+MercaPOS - Muestreo de recursos
+Inicio: 2026-11-13T13:38:12-06:00
+Fin: 2026-11-13T13:38:53-06:00
+Equipo: duran-HP-14-inch-Laptop-PC | Linux-6.14.0-37-generic-x86_64-with-glibc2.39 | CPUs: 8
+API: PID 6046
+CouchDB: contenedor mercapos-couchdb
+Duración: 40s | Intervalo: 1.0s | Muestras: 21
+
+Resumen API Rust:
+  CPU %:    min=0.00 media=9.05 max=50.90
+  RSS MiB:  min=43.24 media=44.10 max=44.30
+  Hilos:    min=9.00 media=9.24 max=10.00
+Resumen CouchDB:
+  CPU %:    min=0.41 media=34.84 max=229.91
+  Mem MiB:  min=89.54 media=93.01 max=94.49
+
+Archivos:
+  CSV: resultados_metrologia/recursos_20261113_133812.csv
+  LOG: resultados_metrologia/recursos_20261113_133812.log
+Nota: CPU% puede superar 100 cuando el proceso usa varios hilos.

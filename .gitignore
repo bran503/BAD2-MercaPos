@@ -1,0 +1,11 @@
+.env
+*.env
+!*.env.example
+mercapos_api/target/
+mercapos_flutter/.dart_tool/
+mercapos_flutter/build/*
+!mercapos_flutter/build/web/
+.idea/
+.vscode/
+__pycache__/
+*.pyc

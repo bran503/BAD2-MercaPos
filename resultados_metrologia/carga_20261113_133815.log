@@ -1,0 +1,30 @@
+MercaPOS - Prueba de carga concurrente
+Inicio: 2026-11-13T13:38:21-06:00
+API: http://127.0.0.1:3001 | Usuario: usuario:medicion-admin | Producto: producto:demo-cebolla
+Operaciones: 200 | Concurrencia: 30
+
+Resultados del cliente:
+  Duración total: 6.061 s
+  Throughput: 33.00 operaciones/s
+  Aceptadas: 200 | Errores: 0
+  Latencia mínima: 103.71 ms
+  Latencia media: 841.32 ms
+  Latencia p50: 884.53 ms
+  Latencia p95: 922.88 ms
+  Latencia p99: 969.52 ms
+  Latencia máxima: 1003.89 ms
+
+Telemetría del servidor (delta durante la carga):
+  Solicitudes POST /operaciones: 200
+  Tiempo acumulado de procesamiento: 167508 ms
+  Tiempo medio por transacción: 837.54 ms
+  Hilos del proceso (después): 10
+  RSS del proceso (después): 44.30 MiB
+  Errores 5xx acumulados: 0
+
+Archivos:
+  CSV: resultados_metrologia/carga_20261113_133815.csv
+  LOG: resultados_metrologia/carga_20261113_133815.log
+  Métricas antes: resultados_metrologia/metricas_antes_20261113_133815.txt
+  Métricas después: resultados_metrologia/metricas_despues_20261113_133815.txt
+Nota: la latencia del cliente incluye red local, HTTP y persistencia en CouchDB.

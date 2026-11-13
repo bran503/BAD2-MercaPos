@@ -1,0 +1,45 @@
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+
+### 1. Leer el documento con sus conflictos (la revisión principal es la GANADORA elegida por CouchDB)
+# @name conf
+GET {{host}}/mercapos_central/producto:0042?conflicts=true
+Authorization: {{auth}}
+
+### 2. Ver el contenido de la revisión PERDEDORA (primera de _conflicts)
+GET {{host}}/mercapos_central/producto:0042?rev={{conf.response.body.$._conflicts[0]}}
+Authorization: {{auth}}
+
+### 3A. Si la ganadora YA es el valor que debe prevalecer: eliminar la perdedora
+DELETE {{host}}/mercapos_central/producto:0042?rev={{conf.response.body.$._conflicts[0]}}
+Authorization: {{auth}}
+
+### 3B. Si la ganadora NO es el valor correcto: escribir el valor correcto sobre la ganadora
+### y después eliminar la perdedora (ejecutar 3B y luego 3A; ajustar el contenido según la regla acordada)
+PUT {{host}}/mercapos_central/producto:0042
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "_rev": "{{conf.response.body.$._rev}}",
+  "tipo": "producto",
+  "nombre": "Tomate (libra)",
+  "categoria": "verduras",
+  "precio_unitario": 1.35,
+  "unidad": "libra",
+  "activo": true,
+  "actualizado_en": "2026-10-24T11:10:00-06:00",
+  "actualizado_por": "usuario:0002"
+}
+
+### 4. Comprobar en el central: ya no debe haber _conflicts
+GET {{host}}/mercapos_central/producto:0042?conflicts=true
+Authorization: {{auth}}
+
+### 5. Comprobar en el local (esperar unos segundos)
+GET {{host}}/mercapos/producto:0042?conflicts=true
+Authorization: {{auth}}
+
+### 6. La vista de conflictos debe quedar vacía
+GET {{host}}/mercapos/_design/conflictos/_view/lista
+Authorization: {{auth}}

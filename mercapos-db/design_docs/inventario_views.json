@@ -1,0 +1,12 @@
+{
+  "views": {
+    "existencias": {
+      "map": "function (doc) { if ((doc.tipo === 'movimiento' || (doc.tipo === 'apertura_inventario' && doc.schema_version === 2)) && doc.puesto_id && doc.producto_id) { emit([doc.puesto_id, doc.producto_id], doc.cantidad); } if (doc.tipo === 'operacion' && doc.schema_version === 2 && doc.puesto_id && Array.isArray(doc.impactos_inventario)) { doc.impactos_inventario.forEach(function (e) { if (e.producto_id && typeof e.cantidad === 'number') { emit([doc.puesto_id, e.producto_id], e.cantidad); } }); } }",
+      "reduce": "_sum"
+    },
+    "existencias_mil": {
+      "map": "function (doc) { if ((doc.tipo === 'movimiento' || (doc.tipo === 'apertura_inventario' && doc.schema_version === 2)) && doc.puesto_id && doc.producto_id) { emit([doc.puesto_id, doc.producto_id], typeof doc.cantidad_mil === 'number' ? doc.cantidad_mil : Math.round(doc.cantidad * 1000)); } if (doc.tipo === 'operacion' && doc.schema_version === 2 && doc.puesto_id && Array.isArray(doc.impactos_inventario)) { doc.impactos_inventario.forEach(function (e) { if (e.producto_id) { emit([doc.puesto_id, e.producto_id], typeof e.cantidad_mil === 'number' ? e.cantidad_mil : Math.round(e.cantidad * 1000)); } }); } }",
+      "reduce": "_sum"
+    }
+  }
+}

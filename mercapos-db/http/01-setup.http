@@ -1,0 +1,26 @@
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+
+### Verificar que CouchDB responde
+GET {{host}}/
+Authorization: {{auth}}
+
+### Crear base de sistema _users
+PUT {{host}}/_users
+Authorization: {{auth}}
+
+### Crear base de sistema _replicator
+PUT {{host}}/_replicator
+Authorization: {{auth}}
+
+### Crear la base del proyecto
+PUT {{host}}/mercapos
+Authorization: {{auth}}
+
+### Crear base separada para credenciales y sesiones (no replicar)
+PUT {{host}}/mercapos_auth
+Authorization: {{auth}}
+
+### Listar bases de datos
+GET {{host}}/_all_dbs
+Authorization: {{auth}}

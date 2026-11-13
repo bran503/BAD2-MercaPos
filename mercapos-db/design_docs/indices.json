@@ -1,0 +1,13 @@
+[
+  {"name":"idx-catalogo-puesto-activo","ddoc":"idx-catalogo-puesto-activo","fields":["tipo","puesto_id","activo"]},
+  {"name":"idx-tipo-activo","ddoc":"idx-tipo-activo","fields":["tipo","activo"]},
+  {"name":"idx-tipo-operacion-fecha","ddoc":"idx-tipo-operacion-fecha","fields":["tipo","tipo_operacion","fecha_local"]},
+  {"name":"idx-operacion-puesto-fecha","ddoc":"idx-operacion-puesto-fecha","fields":["tipo","puesto_id","fecha_local"]},
+  {"name":"idx-operacion-schema-puesto","ddoc":"idx-operacion-schema-puesto","fields":["tipo","schema_version","puesto_id"]},
+  {"name":"idx-tipo-producto","ddoc":"idx-tipo-producto","fields":["tipo","producto_id"]},
+  {"name":"idx-movimiento-puesto-producto","ddoc":"idx-movimiento-puesto-producto","fields":["tipo","puesto_id","producto_id"]},
+  {"name":"idx-apertura-puesto-producto","ddoc":"idx-apertura-puesto-producto","fields":["tipo","schema_version","puesto_id","producto_id"]},
+  {"name":"idx-tipo-fecha","ddoc":"idx-tipo-fecha","fields":["tipo","fecha_local"]},
+  {"name":"idx-conteo-puesto-fecha","ddoc":"idx-conteo-puesto-fecha","fields":["tipo","puesto_id","fecha_local"]},
+  {"name":"idx-incidencia-puesto-resuelta","ddoc":"idx-incidencia-puesto-resuelta","fields":["tipo","puesto_id","resuelta"]}
+]

@@ -1,0 +1,105 @@
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+
+### 0. Leer la revisión vigente de cada tarea de replicación
+# @name repA
+GET {{host}}/_replicator/local-a-central
+Authorization: {{auth}}
+
+###
+# @name repB
+GET {{host}}/_replicator/central-a-local
+Authorization: {{auth}}
+
+### 1. CORTE: detener la replicación en ambos sentidos
+DELETE {{host}}/_replicator/local-a-central?rev={{repA.response.body.$._rev}}
+Authorization: {{auth}}
+
+###
+DELETE {{host}}/_replicator/central-a-local?rev={{repB.response.body.$._rev}}
+Authorization: {{auth}}
+
+### 2. SIN CONEXIÓN: venta registrada en el dispositivo local
+PUT {{host}}/mercapos/operacion:550e8400-e29b-41d4-a716-446655440001
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "operacion",
+  "tipo_operacion": "venta",
+  "puesto_id": "puesto:0001",
+  "usuario_id": "usuario:0001",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-24T10:00:00-06:00",
+  "renglones": [
+    { "producto_id": "producto:0042", "cantidad": 3, "precio_unitario": 1.25 }
+  ],
+  "total": 3.75
+}
+
+###
+PUT {{host}}/mercapos/mov:550e8400-e29b-41d4-a716-446655440001:r1
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "tipo": "movimiento",
+  "puesto_id": "puesto:0001",
+  "producto_id": "producto:0042",
+  "cantidad": -3,
+  "motivo": "venta",
+  "operacion_id": "operacion:550e8400-e29b-41d4-a716-446655440001",
+  "dispositivo_id": "disp03",
+  "fecha_local": "2026-10-24T10:00:00-06:00"
+}
+
+
+### 3. Comprobar: la venta NO debe estar en el central (404)
+GET {{host}}/mercapos_central/operacion:550e8400-e29b-41d4-a716-446655440001
+Authorization: {{auth}}
+
+
+### 4. RECONEXIÓN: reactivar la replicación
+PUT {{host}}/_replicator/local-a-central
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "source": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos",
+  "target": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos_central",
+  "continuous": true
+}
+
+###
+PUT {{host}}/_replicator/central-a-local
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "source": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos_central",
+  "target": "http://admin:{{$dotenv COUCHDB_PASSWORD_URLENCODED}}@localhost:5984/mercapos",
+  "continuous": true
+}
+
+
+### 5. Comprobar (esperar 5-10 s): ahora la venta SÍ debe estar en el central (200)
+GET {{host}}/mercapos_central/operacion:550e8400-e29b-41d4-a716-446655440001
+Authorization: {{auth}}
+
+
+### 6. Existencias en el central (esperado: tomate 45, cebolla 29)
+GET {{host}}/mercapos_central/_design/inventario/_view/existencias?group=true
+Authorization: {{auth}}
+
+
+### Comprobar que la venta existe en la base local
+GET {{host}}/mercapos/operacion:550e8400-e29b-41d4-a716-446655440001
+Authorization: {{auth}}
+
+### Revisar tarea de replicación inversa
+GET {{host}}/_replicator/central-a-local
+Authorization: {{auth}}
+
+### Consultar estado de la replicación inversa
+GET {{host}}/_scheduler/docs/_replicator/central-a-local
+Authorization: {{auth}}

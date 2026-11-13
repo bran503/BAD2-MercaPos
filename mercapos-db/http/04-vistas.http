@@ -1,0 +1,34 @@
+
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+
+### Vista mixta para datos heredados y operaciones canónicas v2.
+### Los movimientos antiguos cuentan solo mientras no hayan sido migrados a otra base.
+PUT {{host}}/mercapos/_design/inventario
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "views": {
+    "existencias": {
+      "map": "function (doc) { if ((doc.tipo === 'movimiento' || (doc.tipo === 'apertura_inventario' && doc.schema_version === 2)) && doc.puesto_id && doc.producto_id) { emit([doc.puesto_id, doc.producto_id], doc.cantidad); } if (doc.tipo === 'operacion' && doc.schema_version === 2 && doc.puesto_id && Array.isArray(doc.impactos_inventario)) { doc.impactos_inventario.forEach(function (impacto) { if (impacto.producto_id && typeof impacto.cantidad === 'number') { emit([doc.puesto_id, impacto.producto_id], impacto.cantidad); } }); } }",
+      "reduce": "_sum"
+    },
+    "existencias_mil": {
+      "map": "function (doc) { if ((doc.tipo === 'movimiento' || (doc.tipo === 'apertura_inventario' && doc.schema_version === 2)) && doc.puesto_id && doc.producto_id) { emit([doc.puesto_id, doc.producto_id], typeof doc.cantidad_mil === 'number' ? doc.cantidad_mil : Math.round(doc.cantidad * 1000)); } if (doc.tipo === 'operacion' && doc.schema_version === 2 && doc.puesto_id && Array.isArray(doc.impactos_inventario)) { doc.impactos_inventario.forEach(function (impacto) { if (impacto.producto_id) { emit([doc.puesto_id, impacto.producto_id], typeof impacto.cantidad_mil === 'number' ? impacto.cantidad_mil : Math.round(impacto.cantidad * 1000)); } }); } }",
+      "reduce": "_sum"
+    }
+  }
+}
+
+### Existencias de todos los productos agrupadas por puesto
+GET {{host}}/mercapos/_design/inventario/_view/existencias?group=true
+Authorization: {{auth}}
+
+### Existencias exactas en milésimas por puesto y producto
+GET {{host}}/mercapos/_design/inventario/_view/existencias_mil?group=true
+Authorization: {{auth}}
+
+### Existencias de tomate en el puesto 0001
+GET {{host}}/mercapos/_design/inventario/_view/existencias?key=%5B%22puesto%3A0001%22%2C%22producto%3A0042%22%5D&group=true
+Authorization: {{auth}}

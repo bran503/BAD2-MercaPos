@@ -1,0 +1,168 @@
+
+@host = http://localhost:5985
+@auth = Basic admin:{{$dotenv COUCHDB_PASSWORD}}
+@fechaInicio = 2026-10-01
+@fechaFin = 2026-11-01
+
+### 1. Ventas de un dispositivo en un rango de fechas
+POST {{host}}/mercapos/_find
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "selector": {
+    "tipo": "operacion",
+    "tipo_operacion": "venta",
+    "fecha_local": {
+      "$gte": "{{fechaInicio}}",
+      "$lt": "{{fechaFin}}"
+    },
+    "dispositivo_id": "disp03"
+  },
+  "use_index": [
+    "_design/idx-tipo-operacion-fecha",
+    "idx-tipo-operacion-fecha"
+  ],
+  "fields": [
+    "_id",
+    "total",
+    "fecha_local",
+    "usuario_id"
+  ],
+  "limit": 50
+}
+
+### 2. Mermas registradas en el rango de fechas
+POST {{host}}/mercapos/_find
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "selector": {
+    "tipo": "operacion",
+    "tipo_operacion": "merma",
+    "fecha_local": {
+      "$gte": "{{fechaInicio}}",
+      "$lt": "{{fechaFin}}"
+    }
+  },
+  "use_index": [
+    "_design/idx-tipo-operacion-fecha",
+    "idx-tipo-operacion-fecha"
+  ],
+  "fields": [
+    "_id",
+    "motivo",
+    "fecha_local",
+    "dispositivo_id",
+    "puesto_id"
+  ]
+}
+
+### 3. Compras, devoluciones o ajustes
+### Para cambiar la consulta, sustituir devolucion por compra o ajuste
+POST {{host}}/mercapos/_find
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "selector": {
+    "tipo": "operacion",
+    "tipo_operacion": "devolucion",
+    "fecha_local": {
+      "$gte": "{{fechaInicio}}",
+      "$lt": "{{fechaFin}}"
+    }
+  },
+  "use_index": [
+    "_design/idx-tipo-operacion-fecha",
+    "idx-tipo-operacion-fecha"
+  ],
+  "fields": [
+    "_id",
+    "tipo_operacion",
+    "total",
+    "motivo",
+    "operacion_origen_id",
+    "conteo_id",
+    "fecha_local"
+  ]
+}
+
+### 4. Movimientos de un producto
+POST {{host}}/mercapos/_find
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "selector": {
+    "tipo": "movimiento",
+    "producto_id": "producto:0042"
+  },
+  "use_index": [
+    "_design/idx-tipo-producto",
+    "idx-tipo-producto"
+  ],
+  "fields": [
+    "_id",
+    "puesto_id",
+    "producto_id",
+    "cantidad",
+    "motivo",
+    "fecha_local"
+  ],
+  "limit": 100
+}
+
+### 5. Catálogo de productos activos
+POST {{host}}/mercapos/_find
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "selector": {
+    "tipo": "producto",
+    "activo": true
+  },
+  "use_index": [
+    "_design/idx-tipo-activo",
+    "idx-tipo-activo"
+  ],
+  "fields": [
+    "_id",
+    "nombre",
+    "precio_unitario",
+    "unidad"
+  ],
+  "limit": 100
+}
+
+### 6. Conteos físicos en el rango de fechas
+POST {{host}}/mercapos/_find
+Authorization: {{auth}}
+Content-Type: application/json
+
+{
+  "selector": {
+    "tipo": "conteo_fisico",
+    "fecha_local": {
+      "$gte": "{{fechaInicio}}",
+      "$lt": "{{fechaFin}}"
+    }
+  },
+  "use_index": [
+    "_design/idx-tipo-fecha",
+    "idx-tipo-fecha"
+  ],
+  "fields": [
+    "_id",
+    "puesto_id",
+    "fecha_local",
+    "renglones"
+  ],
+  "limit": 100
+}
+
+### 7. Existencias agrupadas por puesto y producto
+GET {{host}}/mercapos/_design/inventario/_view/existencias?group=true
+Authorization: {{auth}}
