@@ -1,4 +1,4 @@
-# MercaPOS - PPI115 GT02
+# MercaPOS - BASE DE DATOS FMOCC
 
 Punto de venta para equipos de gama baja con backend en Rust (Axum), persistencia
 en Apache CouchDB, frontend Flutter y despliegue reproducible con Docker Compose.
